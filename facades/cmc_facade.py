@@ -1,6 +1,10 @@
 import requests
 import locale
 import json
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def get_btc_price():
   url = 'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest'
@@ -11,7 +15,7 @@ def get_btc_price():
 
   headers = {
     'Accepts': 'application/json',
-    'X-CMC_PRO_API_KEY': '4d91b248-5924-45c8-91ed-66c5e6a5c283'
+    'X-CMC_PRO_API_KEY': os.getenv('CMC_API_KEY')
   }
   try: 
     response = requests.get(url, params=parameters, headers=headers)

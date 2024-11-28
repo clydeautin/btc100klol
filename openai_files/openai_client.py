@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from openai import OpenAI, OpenAIError
 
 from .openai_exceptions import OpenAIClientError
-from .prompts import get_prompt
+from .helpers import get_prompt, get_system_message
 from .utils import PromptType
 
 
@@ -19,15 +19,19 @@ class OpenAIClient:
     def fetch_holiday_list(self) -> str:
         date_today = datetime.datetime.now().strftime("%B %d, %Y")
         prompt = get_prompt(PromptType.GET_HOLIDAYS, date_today)
-        return self.fetch_chat_completion(prompt)
+        system_message = get_system_message(PromptType.GET_HOLIDAYS)
+        return self.fetch_chat_completion(
+            prompt,
+            system_message,
+        )
 
-    def fetch_chat_completion(self, prompt: str) -> str:
+    def fetch_chat_completion(self, prompt: str, system_message: str) -> str:
         try:
             completion = self.client.chat.completions.create(
                 model=self.chat_model,
                 messages=self.generate_messages(
                     prompt,
-                    "You are an expert on international holidays, commemorations, and funny celebrations.",
+                    system_message,
                 ),
             )
             content = completion.choices[0].message.content

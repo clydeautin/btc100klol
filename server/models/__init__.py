@@ -1,3 +1,2 @@
 from .prompt import Prompt
-
-__all__ = ["Prompt"]
+from .image_link import ImageLink

@@ -7,6 +7,8 @@ DeclarativeBase: DeclarativeMeta = declarative_base()
 
 
 class BaseWithoutId(DeclarativeBase):  # type: ignore
+    """Expand this for assoc tables."""
+
     __abstract__ = True
 
     created = Column(
@@ -38,6 +40,8 @@ BT = TypeVar("BT", bound="Base")
 
 
 class Base(BaseWithoutId):
+    """Most models should expand on this."""
+
     __abstract__ = True
 
     id = Column(

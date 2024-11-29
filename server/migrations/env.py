@@ -8,6 +8,7 @@ from sqlalchemy import pool
 
 
 from server.models.base import DeclarativeBase
+from server.models.prompt import Prompt  # type: ignore
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

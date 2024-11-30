@@ -1,13 +1,21 @@
-import datetime
+from datetime import datetime, timezone
+import io
 import logging
+import requests  # type: ignore
 from typing import Optional
 
 from dotenv import load_dotenv
 from openai import OpenAI, OpenAIError
 
-from ..const import DEFAULT_IMAGE_QUALITY, DEFAULT_IMAGE_SIZE
+from const import (
+    AWS_REGION,
+    AWS_S3_BUCKET,
+    DEFAULT_IMAGE_QUALITY,
+    DEFAULT_IMAGE_SIZE,
+)
 from .helpers import get_prompt, get_system_message
 from .openai_exceptions import OpenAIClientError
+from server.s3_client import get_s3_client
 from .utils import PromptType
 
 
@@ -19,7 +27,7 @@ class OpenAIClient:
         self.image_model = image_model
 
     def fetch_holiday_list(self) -> str:
-        date_today = datetime.datetime.now().strftime("%B %d, %Y")
+        date_today = datetime.now().strftime("%B %d, %Y")
         prompt = get_prompt(PromptType.GET_HOLIDAYS, date_today)
         system_message = get_system_message(PromptType.GET_HOLIDAYS)
 
@@ -84,6 +92,65 @@ class OpenAIClient:
                 f"OpenAI API image generation failed: {str(e)}"
             ) from e
 
+    def generate_unique_file_name(self, file_name: str, file_type: str = "png") -> str:
+        current_utc_epoch_s = int(datetime.now(timezone.utc).timestamp())
+        return f"{file_name}-{current_utc_epoch_s}.{file_type}"
+
+    def save_image_to_s3(self, image_url: str, unique_file_name: str) -> str:
+        """Saves image binary to S3 and returns private URL
+
+        While S3 concerns might be better suited as methods in an S3 object,
+        but since S3 is only used to upload and pre-sign images, we can get
+        away with overloading the OpenAI client a little bit. We should create
+        the S3 object if the scope ever expands beyond this.
+        """
+        response = requests.get(image_url)
+        if response.status_code == 200:
+            s3 = get_s3_client()
+
+            image_data = response.content
+
+            s3.upload_fileobj(
+                io.BytesIO(image_data),
+                AWS_S3_BUCKET,
+                unique_file_name,
+                ExtraArgs={"ContentType": "image/png"},
+            )
+
+            s3_url = (
+                f"https://{AWS_S3_BUCKET}.s3.{AWS_REGION}.amazonaws.com/{u_file_name}"
+            )
+
+            return s3_url
+        else:
+            raise Exception(
+                f"Failed to retrieve image. Status code: {response.status_code}"
+            )
+
+    def fetch_presigned_url(
+        self,
+        unique_file_name: str,
+        expiration: int = 3600,
+    ) -> str:
+        """Generates publically accessible S3 image URL
+
+        While S3 concerns might be better suited as methods in an S3 object,
+        but since S3 is only used to upload and pre-sign images, we can get
+        away with overloading the OpenAI client a little bit. We should create
+        the S3 object if the scope ever expands beyond this.
+        """
+        s3 = get_s3_client()  # Ensure you have your S3 client set up
+        try:
+            url = s3.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": AWS_S3_BUCKET, "Key": unique_file_name},
+                ExpiresIn=expiration,
+            )
+            return url
+        except Exception as e:
+            print(f"Error generating pre-signed URL: {e}")
+            raise
+
     def generate_messages(
         self, prompt: str, system_message: Optional[str] = None
     ) -> list:
@@ -95,9 +162,16 @@ class OpenAIClient:
 
 
 if __name__ == "__main__":
+    # Live tests. Remove when launching.
     client = OpenAIClient()
     holiday_list = client.fetch_holiday_list()
     holiday_image_prompt = get_prompt(PromptType.GENERATE_IMAGE_HAPPY, holiday_list)
     print(holiday_image_prompt)
     holiday_image_url = client.fetch_generated_image_url(holiday_image_prompt)
     print(holiday_image_url)
+    curr_date_str = datetime.now().strftime("%d-%b-%Y").upper()
+    file_name = f"{PromptType.GENERATE_IMAGE_HAPPY.value}-{curr_date_str}"
+    u_file_name = client.generate_unique_file_name(file_name)
+    s3_image_url = client.save_image_to_s3(holiday_image_url, u_file_name)
+    pre_signed_url = client.fetch_presigned_url(u_file_name)
+    print(f"{pre_signed_url=}")

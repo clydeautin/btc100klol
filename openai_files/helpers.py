@@ -26,7 +26,9 @@ PROMPTS = {
         "Each item should be a plain-text description in the following format: "
         "'[Holiday Name] - [Brief Description]'. "
         "Do not include categories, preambles, or additional comments. "
-        "Return only the list of holidays with descriptions in the specified format."
+        "Return only the list of holidays with descriptions in the specified format. "
+        "Please omit holidays or words that may trigger OpenAIs safety system when "
+        "generating images. Opt to use family friendly synonyms instead of omitting if possible."
     ),
 }
 

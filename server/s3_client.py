@@ -67,9 +67,7 @@ class S3ClientFactory:
         response = requests.get(image_url)
         if response.status_code == 200:
             s3 = self.get_s3_client()
-
             image_data = response.content
-
             s3.upload_fileobj(
                 io.BytesIO(image_data),
                 AWS_S3_BUCKET,

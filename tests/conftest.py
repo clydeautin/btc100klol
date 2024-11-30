@@ -7,9 +7,9 @@ from server.models.base import Base
 
 @pytest.fixture(scope="function")
 def engine():
-    # Use an in-memory SQLite database
+    # init an in-memory SQLite database
     engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(bind=engine)  # Create tables
+    Base.metadata.create_all(bind=engine)
     yield engine
     engine.dispose()
 

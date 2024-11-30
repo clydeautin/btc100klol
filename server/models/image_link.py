@@ -1,10 +1,10 @@
 # mypy: ignore-errors
 
 from sqlalchemy import (
-    BigInteger,
     Column,
     Enum,
     ForeignKey,
+    Integer,
     Text,
 )
 from sqlalchemy.orm import relationship
@@ -18,7 +18,7 @@ class ImageLink(Base):
 
     prompt = relationship("Prompt", back_populates="image")
     prompt_id = Column(
-        BigInteger,
+        Integer,
         ForeignKey("prompt.id"),
         nullable=False,
         index=True,

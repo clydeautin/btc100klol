@@ -1,8 +1,8 @@
 """adding prompt and image_link tables
 
-Revision ID: 24a94da85f6b
+Revision ID: 9d578e490089
 Revises: 3edb3fbd6fc2
-Create Date: 2024-11-29 15:24:09.773414
+Create Date: 2024-11-29 16:50:20.334104
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "24a94da85f6b"
+revision: str = "9d578e490089"
 down_revision: Union[str, None] = "3edb3fbd6fc2"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -41,7 +41,7 @@ def upgrade() -> None:
             server_default="PENDING",
             nullable=False,
         ),
-        sa.Column("id", sa.BigInteger(), nullable=False),
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("created", sa.DateTime(), nullable=False),
         sa.Column("created_ts", sa.Integer(), nullable=False),
         sa.Column("last_modified", sa.DateTime(), nullable=False),
@@ -50,7 +50,7 @@ def upgrade() -> None:
     )
     op.create_table(
         "image_link",
-        sa.Column("prompt_id", sa.BigInteger(), nullable=False),
+        sa.Column("prompt_id", sa.Integer(), nullable=False),
         sa.Column("openai_image_url", sa.Text(), nullable=False),
         sa.Column("s3_image_url", sa.Text(), nullable=True),
         sa.Column(
@@ -59,7 +59,7 @@ def upgrade() -> None:
             server_default="PENDING",
             nullable=False,
         ),
-        sa.Column("id", sa.BigInteger(), nullable=False),
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("created", sa.DateTime(), nullable=False),
         sa.Column("created_ts", sa.Integer(), nullable=False),
         sa.Column("last_modified", sa.DateTime(), nullable=False),

@@ -1,5 +1,7 @@
-from enum import auto, Enum
+from enum import Enum
 
 
-class PromptType(Enum):
-    GET_HOLIDAYS = auto()
+class PromptType(str, Enum):
+    GET_HOLIDAYS = "GET_HOLIDAYS"
+    GENERATE_IMAGE_SAD = "GENERATE_IMAGE_SAD"
+    GENERATE_IMAGE_HAPPY = "GENERATE_IMAGE_HAPPY"

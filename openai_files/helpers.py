@@ -6,7 +6,7 @@ SYSTEM_MESSAGES = {
 
 
 def get_system_message(prompt_type: PromptType) -> str:
-    return SYSTEM_MESSAGES[prompt_type]
+    return SYSTEM_MESSAGES.get(prompt_type, "")
 
 
 PROMPTS = {

@@ -13,10 +13,11 @@ from .helpers import get_prompt, get_system_message
 from .openai_exceptions import OpenAIClientError
 from .utils import PromptType
 
+load_dotenv()
+
 
 class OpenAIClient:
     def __init__(self, chat_model: str = "gpt-4o-mini", image_model: str = "dall-e-3"):
-        load_dotenv()
         self.client = OpenAI()
         self.chat_model = chat_model
         self.image_model = image_model
@@ -116,5 +117,6 @@ if __name__ == "__main__":
     file_name = f"{PromptType.GENERATE_IMAGE_HAPPY.value}-{curr_date_str}"
     u_file_name = client.generate_unique_file_name(file_name)
     s3_image_url = s3_client.save_image_to_s3(holiday_image_url, u_file_name)
+    print(f"{s3_image_url=}")
     pre_signed_url = s3_client.fetch_presigned_url(u_file_name)
     print(f"{pre_signed_url=}")

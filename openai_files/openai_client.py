@@ -1,25 +1,29 @@
-import datetime
+from datetime import datetime, timezone
 import logging
 from typing import Optional
 
 from dotenv import load_dotenv
 from openai import OpenAI, OpenAIError
 
-from ..const import DEFAULT_IMAGE_QUALITY, DEFAULT_IMAGE_SIZE
+from const import (
+    DEFAULT_IMAGE_QUALITY,
+    DEFAULT_IMAGE_SIZE,
+)
 from .helpers import get_prompt, get_system_message
 from .openai_exceptions import OpenAIClientError
 from .utils import PromptType
 
+load_dotenv()
+
 
 class OpenAIClient:
     def __init__(self, chat_model: str = "gpt-4o-mini", image_model: str = "dall-e-3"):
-        load_dotenv()
         self.client = OpenAI()
         self.chat_model = chat_model
         self.image_model = image_model
 
     def fetch_holiday_list(self) -> str:
-        date_today = datetime.datetime.now().strftime("%B %d, %Y")
+        date_today = datetime.now().strftime("%B %d, %Y")
         prompt = get_prompt(PromptType.GET_HOLIDAYS, date_today)
         system_message = get_system_message(PromptType.GET_HOLIDAYS)
 
@@ -84,6 +88,10 @@ class OpenAIClient:
                 f"OpenAI API image generation failed: {str(e)}"
             ) from e
 
+    def generate_unique_file_name(self, file_name: str, file_type: str = "png") -> str:
+        current_utc_epoch_s = int(datetime.now(timezone.utc).timestamp())
+        return f"{file_name}-{current_utc_epoch_s}.{file_type}"
+
     def generate_messages(
         self, prompt: str, system_message: Optional[str] = None
     ) -> list:
@@ -95,9 +103,20 @@ class OpenAIClient:
 
 
 if __name__ == "__main__":
+    # Live tests. Remove when launching.
+    from server.s3_client import S3ClientFactory
+
+    s3_client = S3ClientFactory()
     client = OpenAIClient()
     holiday_list = client.fetch_holiday_list()
     holiday_image_prompt = get_prompt(PromptType.GENERATE_IMAGE_HAPPY, holiday_list)
     print(holiday_image_prompt)
     holiday_image_url = client.fetch_generated_image_url(holiday_image_prompt)
     print(holiday_image_url)
+    curr_date_str = datetime.now().strftime("%d-%b-%Y").upper()
+    file_name = f"{PromptType.GENERATE_IMAGE_HAPPY.value}-{curr_date_str}"
+    u_file_name = client.generate_unique_file_name(file_name)
+    s3_image_url = s3_client.save_image_to_s3(holiday_image_url, u_file_name)
+    print(f"{s3_image_url=}")
+    pre_signed_url = s3_client.fetch_presigned_url(u_file_name)
+    print(f"{pre_signed_url=}")

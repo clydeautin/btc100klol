@@ -4,7 +4,6 @@ import json
 import os
 import logging
 from dotenv import load_dotenv
-from typing import float
 
 load_dotenv()
 
@@ -68,17 +67,13 @@ def get_btc_price():
         logging.error(f"Invalid JSON response from CMC API: {str(e)}")
         raise CMCResponseError("Invalid JSON response from API")
 
-    except Exception as e:
-        logging.error(f"Unexpected error while fetching BTC price: {str(e)}")
-        raise CMCApiError(f"Unexpected error: {str(e)}")
-
 class CMCApiError(Exception):
     """Base exception for CMC API related errors"""
     pass
 
 class CMCConnectionError(CMCApiError):
-  """Exception for network/connection related errors"""
-  pass
+    """Exception for network/connection related errors"""
+    pass
 
 class CMCResponseError(CMCApiError):
     """Exception for invalid API responses"""

@@ -2,6 +2,9 @@
 
 Welcome to 100kbtclol, an app that adds a touch of humor to the highs and lows of Bitcoin investing! Every day, our app checks Bitcoin’s price on CoinMarketCap and determines whether it’s up or down. Based on the price trend, we use daily holidays as inspiration to prompt OpenAI to generate images of a happy or sad investor. Whether you’re celebrating or commiserating, our app delivers a fun, themed image to match the day’s mood.
 
+## Architecture
+<img width="920" alt="Screenshot 2024-12-10 at 10 09 10 AM" src="https://github.com/user-attachments/assets/3c3625ec-f88c-4c11-bbe6-1ab565e44b40">
+
 ## Technology used
 Backend
 - Flask - Python web framework

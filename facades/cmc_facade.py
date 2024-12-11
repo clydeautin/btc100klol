@@ -3,7 +3,7 @@ import locale
 import json
 import os
 import logging
-from dotenv import load_dotenv
+from dotenv import load_dotenv #change this to pull in API key from Const file
 
 load_dotenv()
 

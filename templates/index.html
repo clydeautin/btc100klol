@@ -1,10 +1,12 @@
+<!-- This serves as a sample app to test out MongoDB or other test -->
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>MongoDB Flask App</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+        <!-- <link rel="stylesheet" href="static/styles.css"> -->
     </head>
     <body>
         <h1>Welcome to the MongoDB Flask App</h1>
@@ -39,5 +41,19 @@
                 </p>
                 <button type="submit">Submit</button>
             </form>
+            <hr>
+            {% for todo in todos %}
+                <div class="todo">
+                    <p>{{ todo['content'] }} — <i>{{ todo['degree'] }}</i></p>
+                    <form 
+                        method="POST"
+                        action="{{ url_for('delete', id=todo['_id']) }}">
+                    <input 
+                        type="submit"
+                        value="delete todo"
+                        onclick="return confirm('Are you sure you want to delete this entry?')"/>
+                    </form>
+                </div>
+            {% endfor %}
         </div>
 </html>

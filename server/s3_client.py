@@ -6,7 +6,7 @@ the client if credentials are invalid or expire.
 
 Get client when needed; don't hold onto it too long or we won't be able 
 to guarantee a valid connection.
- """
+"""
 
 import io
 import requests  # type: ignore

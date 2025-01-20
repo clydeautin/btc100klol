@@ -23,8 +23,13 @@ def check_bitcoin_price() -> None:
     # get API credentials or API client
     # get_btc_price
     price = get_btc_price()
-    # some validation of price
-    # write to DB
+    if price <= 0:
+        raise ValueError("Invalid Bitcoin price: must be greater than 0")
+
+    new_price = BitcoinPrice(price=price)
+    db.session.add(new_price)
+    db.session.commit()
+    
     return price
 
 

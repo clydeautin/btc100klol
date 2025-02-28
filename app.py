@@ -19,7 +19,7 @@ mongo_db_name = os.getenv("MONGO_DB")
 #initialize mongoDB client and database
 client = MongoClient(mongo_uri)
 # This is a mongo database, not a postgres database
-dbm = client[mongo_db_name]
+# dbm = client[mongo_db_name]
 
 
 @app.route("/")

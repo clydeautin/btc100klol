@@ -28,7 +28,8 @@ def home():
 
 
 if __name__ == "__main__":
-    app.run(debug=DEBUG, host= '0.0.0.0')
+    port = int(os.environ.get("PORT", 5000)) 
+    app.run(host="0.0.0.0", port=port)
 
 # These are controller actions related to MongoDB to test if it works properly
 # @app.route("/", methods=["GET", "POST"])

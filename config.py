@@ -5,7 +5,8 @@ load_dotenv()
 
 
 class Config:
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        "DATABASE_URL_FIXED", "postgresql://postgres@localhost/btc_dev"
-    )
+    uri = os.getenv("DATABASE_URL_FIXED", "postgresql://postgres@localhost/btc_dev")
+    if uri and uri.startswith("postgres://"):
+        uri = uri.replace("postgres://", "postgresql://", 1)
+    SQLALCHEMY_DATABASE_URI = uri
     SQLALCHEMY_TRACK_MODIFICATIONS = False

@@ -16,7 +16,7 @@ db = SQLAlchemy(app)
 mongo_uri = os.getenv("MONGO_URI")
 mongo_db_name = os.getenv("MONGO_DB")
 
-#initialize mongoDB client and database
+# initialize mongoDB client and database
 client = MongoClient(mongo_uri)
 # This is a mongo database, not a postgres database
 # dbm = client[mongo_db_name]
@@ -28,7 +28,7 @@ def home():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000)) 
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
 
 # These are controller actions related to MongoDB to test if it works properly

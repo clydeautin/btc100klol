@@ -31,7 +31,7 @@ Pipfile.lock
 poetry.lock
 
 # Migrations (optional, if regenerating)
-migrations/
+# migrations/
 
 # Jupyter Notebook checkpoints (if using Jupyter)
 .ipynb_checkpoints/

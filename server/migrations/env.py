@@ -20,7 +20,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL_FIXED")
 
 if DATABASE_URL:
     config.set_main_option("sqlalchemy.url", DATABASE_URL)

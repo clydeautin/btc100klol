@@ -17,3 +17,5 @@ AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET")
 AWS_REGION = os.getenv("AWS_REGION")
+
+DEFAULT_IMAGE_URL = "https://static0.gamerantimages.com/wordpress/wp-content/uploads/2021/11/commander-shepard-close-up-mass-effect.jpg"

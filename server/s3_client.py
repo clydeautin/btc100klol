@@ -1,10 +1,10 @@
-""" 
+"""
 S3 Singleton Factory
 
 Keeps overhead low by keeping at most one S3 client alive, refreshing
 the client if credentials are invalid or expire.
 
-Get client when needed; don't hold onto it too long or we won't be able 
+Get client when needed; don't hold onto it too long or we won't be able
 to guarantee a valid connection.
 """
 
@@ -86,7 +86,7 @@ class S3ClientFactory:
     def fetch_presigned_url(
         self,
         unique_file_name: str,
-        expiration: int = 3600,
+        expiration: int = 3600 * 24,
     ) -> str:
         s3 = self.get_s3_client()
         try:

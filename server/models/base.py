@@ -1,7 +1,7 @@
 from typing import Optional, Type, TypeVar
 
 from sqlalchemy.orm import declarative_base, DeclarativeMeta
-from sqlalchemy import Column, DateTime, func, Integer
+from sqlalchemy import Column, DateTime, func, Integer, cast
 
 DeclarativeBase: DeclarativeMeta = declarative_base()
 
@@ -18,7 +18,7 @@ class BaseWithoutId(DeclarativeBase):  # type: ignore
     )
     created_ts = Column(
         Integer,
-        default=func.strftime("%s", func.now()),
+        default=cast(func.extract("epoch", func.now()), Integer),
         nullable=False,
     )
     last_modified = Column(
@@ -29,8 +29,8 @@ class BaseWithoutId(DeclarativeBase):  # type: ignore
     )
     last_modified_ts = Column(
         Integer,
-        default=func.strftime("%s", func.now()),
-        onupdate=func.strftime("%s", func.now()),
+        default=cast(func.extract("epoch", func.now()), Integer),
+        onupdate=cast(func.extract("epoch", func.now()), Integer),
         nullable=False,
     )
 

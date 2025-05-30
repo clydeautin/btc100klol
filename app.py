@@ -1,8 +1,9 @@
 from flask import Flask, render_template, url_for, request, redirect
 from flask_sqlalchemy import SQLAlchemy
-from const import DEBUG
-from pymongo import MongoClient
-from bson.objectid import ObjectId
+
+# from const import DEBUG
+# from pymongo import MongoClient
+# from bson.objectid import ObjectId
 from dotenv import load_dotenv
 import os
 
@@ -16,19 +17,27 @@ db = SQLAlchemy(app)
 mongo_uri = os.getenv("MONGO_URI")
 mongo_db_name = os.getenv("MONGO_DB")
 
-#initialize mongoDB client and database
-client = MongoClient(mongo_uri)
+# initialize mongoDB client and database
+# client = MongoClient(mongo_uri)
 # This is a mongo database, not a postgres database
 # dbm = client[mongo_db_name]
 
 
-@app.route("/")
-def home():
-    return "BTC 100K!"
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object("config.Config")
+    db.init_app(app)
+
+    @app.route("/")
+    def home():
+        return "BTC 100K!"
+
+    return app
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000)) 
+    app = create_app()
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
 
 # These are controller actions related to MongoDB to test if it works properly

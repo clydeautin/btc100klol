@@ -18,19 +18,19 @@ scheduler = BlockingScheduler()
 # check to see if there is a task in the queue
 # tasks:
 # check price of bitcoin and write
-@scheduler.scheduled_job("interval", minutes=5)
-def check_bitcoin_price() -> None:
-    # get API credentials or API client
-    # get_btc_price
-    price = get_btc_price()
-    if price <= 0:
-        raise ValueError("Invalid Bitcoin price: must be greater than 0")
+# @scheduler.scheduled_job("interval", minutes=5)
+# def check_bitcoin_price() -> None:
+#     # get API credentials or API client
+#     # get_btc_price
+#     price = get_btc_price()
+#     if price <= 0:
+#         raise ValueError("Invalid Bitcoin price: must be greater than 0")
 
-    new_price = BitcoinPrice(price=price)
-    db.session.add(new_price)
-    db.session.commit()
-    
-    return price
+#     new_price = BitcoinPrice(price=price)
+#     db.session.add(new_price)
+#     db.session.commit()
+
+#     return price
 
 
 # Daily worker

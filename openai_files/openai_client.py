@@ -25,7 +25,7 @@ class OpenAIClient:
         self.chat_model = chat_model
         self.image_model = image_model
 
-    def fetch_holiday_list(self, target_date: datetime = datetime.now()) -> str:
+    def fetch_holiday_list(self, target_date: datetime) -> str:
         date_today = target_date.strftime("%B %d, %Y")
         prompt = get_prompt(PromptType.GET_HOLIDAYS, date_today)
         system_message = get_system_message(PromptType.GET_HOLIDAYS)

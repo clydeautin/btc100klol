@@ -57,8 +57,8 @@ class DailyImageGenerator:
             prompt_type=PromptType.GET_HOLIDAYS,
             status=TaskStatus.PENDING,
         )
-        with self.db_accessor.session_scope():
-            self.db_accessor.add(prompt)
+        with self.db_accessor.session_scope() as session:
+            session.add(prompt)
         return prompt
 
     def _fetch_holiday_list(self, prompt: Prompt) -> str:

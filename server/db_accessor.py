@@ -67,7 +67,7 @@ class DBAccessor:
                     pass
 
                 def query(self, *a, **kw):
-                    # maybe we allow writes?
+                    # maybe we allow reads?
                     pass
 
             yield WriteDisabledSession()

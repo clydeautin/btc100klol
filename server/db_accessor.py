@@ -1,3 +1,4 @@
+import os
 from app import db
 from server.models import Base
 from contextlib import contextmanager
@@ -12,6 +13,14 @@ class DBAccessor:
         if cls._instance is None:
             cls._instance = super(DBAccessor, cls).__new__(cls, *args, **kwargs)
         return cls._instance
+
+    def __init__(self):
+        if getattr(self, "_initialized", False):
+            return
+        self._initialized = True
+
+        # TODO(john): set this up on heroku
+        self.write_enabled = os.getenv("WRITE_ENABLED", "false").lower() == "true"
 
     def add(self, instance: Base) -> None:
         self._db.session.add(instance)
@@ -36,6 +45,34 @@ class DBAccessor:
 
     @contextmanager
     def session_scope(self):
+        if not self.write_enabled:
+            # No-op session prevents db writes
+            class WriteDisabledSession:
+                def add(self, *a, **kw):
+                    pass
+
+                def commit(self):
+                    pass
+
+                def flush(self):
+                    pass
+
+                def rollback(self):
+                    pass
+
+                def delete(self, *a, **kw):
+                    pass
+
+                def refresh(self, *a, **kw):
+                    pass
+
+                def query(self, *a, **kw):
+                    # maybe we allow writes?
+                    pass
+
+            yield WriteDisabledSession()
+            return
+
         try:
             yield
             self.commit()

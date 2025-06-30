@@ -86,7 +86,7 @@ class S3ClientFactory:
     def fetch_presigned_url(
         self,
         unique_file_name: str,
-        expiration: int = 3600 * 24,
+        expiration: int,
     ) -> str:
         s3 = self.get_s3_client()
         try:

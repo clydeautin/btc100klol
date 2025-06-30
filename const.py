@@ -19,3 +19,6 @@ AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET")
 AWS_REGION = os.getenv("AWS_REGION")
 
 DEFAULT_IMAGE_URL = "https://static0.gamerantimages.com/wordpress/wp-content/uploads/2021/11/commander-shepard-close-up-mass-effect.jpg"
+
+# 1 day + 5 minutes for overlap
+AWS_PRESIGNED_URL_EXPIRATION_SECONDS = 3600 * 24 + 5 * 60

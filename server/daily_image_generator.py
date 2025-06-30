@@ -9,8 +9,6 @@ from server.models.utils import TaskStatus
 from server.models.image_link import ImageLink
 from openai_files.helpers import get_prompt
 
-from const import AWS_PRESIGNED_URL_EXPIRATION_SECONDS
-
 
 class DailyImageGenerator:
     def __init__(
@@ -23,29 +21,36 @@ class DailyImageGenerator:
         self.s3_client = s3_client
         self.db_accessor = db_accessor
 
-    def generate_daily_image(self, prompt_type: PromptType) -> DailyImageVersion:
-        current_date = datetime.now()
-
+    def generate_daily_images(
+        self,
+        prompt_types: list[PromptType],
+        target_date: datetime,
+        presigned_url_expiry: datetime,
+    ) -> list[DailyImageVersion]:
         # Get holiday list
-        holiday_prompt_record = self._create_holiday_prompt_record(current_date)
+        holiday_prompt_record = self._create_holiday_prompt_record(target_date)
         holiday_list = self._fetch_holiday_list(holiday_prompt_record)
 
-        # Generate image prompt
-        image_prompt_record = self._create_image_prompt_record(prompt_type)
-        image_prompt_text = self._generate_image_prompt(
-            image_prompt_record, holiday_list
-        )
+        daily_versions: list[DailyImageVersion] = []
 
-        # Generate and save image
-        image_link = self._create_image_link(image_prompt_record)
-        openai_url = self._generate_image(image_link, image_prompt_text)
-        s3_url = self._save_to_s3(image_link, openai_url, current_date)
+        # Generate image prompts
+        for prompt_type in prompt_types:
+            image_prompt_record = self._create_image_prompt_record(prompt_type)
+            image_prompt_text = self._generate_image_prompt(
+                image_prompt_record, holiday_list
+            )
 
-        # Create and finalize daily version
-        daily_version = self._create_daily_version(image_link, prompt_type)
-        self._finalize_daily_version(daily_version, s3_url)
+            # Generate and save image
+            image_link = self._create_image_link(image_prompt_record)
+            openai_url = self._generate_image(image_link, image_prompt_text)
+            s3_url = self._save_to_s3(image_link, openai_url, target_date)
 
-        return daily_version
+            # Create and finalize daily version
+            daily_version = self._create_daily_version(image_link, prompt_type)
+            self._finalize_daily_version(daily_version, s3_url, presigned_url_expiry)
+            daily_versions.append(daily_version)
+
+        return daily_versions
 
     def _create_holiday_prompt_record(
         self,
@@ -191,15 +196,20 @@ class DailyImageGenerator:
             session.add(daily_version)
         return daily_version
 
-    def _finalize_daily_version(self, version: DailyImageVersion, s3_url: str) -> None:
+    def _finalize_daily_version(
+        self,
+        version: DailyImageVersion,
+        s3_url: str,
+        presigned_url_expiry: datetime,
+    ) -> None:
         status = TaskStatus.FAILED
         presigned_url = ""
         error: Exception | None = None
 
         try:
             presigned_url = self.s3_client.fetch_presigned_url(
-                version.image_link.s3_image_url,
-                AWS_PRESIGNED_URL_EXPIRATION_SECONDS,
+                s3_url,
+                presigned_url_expiry,
             )
             status = TaskStatus.COMPLETED
         except Exception as e:
@@ -222,7 +232,7 @@ class DailyImageGenerator:
             attached_version.presigned_url = presigned_url
             attached_version.status = status
             attached_version.presigned_url_expiry = (
-                datetime.now() + timedelta(seconds=AWS_PRESIGNED_URL_EXPIRATION_SECONDS)
+                datetime.now() + timedelta(seconds=presigned_url_expiry)
                 if is_success
                 else None
             )

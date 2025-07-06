@@ -6,12 +6,15 @@ from dotenv import load_dotenv
 from openai import OpenAI, OpenAIError
 
 from const import (
+    AWS_PRESIGNED_URL_EXPIRATION_SECONDS,
     DEFAULT_IMAGE_QUALITY,
     DEFAULT_IMAGE_SIZE,
 )
 from .helpers import get_prompt, get_system_message
 from .openai_exceptions import OpenAIClientError
 from .utils import PromptType
+from server.db_accessor import DBAccessor
+from server.models import Prompt, DailyImageVersion
 
 load_dotenv()
 
@@ -22,8 +25,8 @@ class OpenAIClient:
         self.chat_model = chat_model
         self.image_model = image_model
 
-    def fetch_holiday_list(self) -> str:
-        date_today = datetime.now().strftime("%B %d, %Y")
+    def fetch_holiday_list(self, target_date: datetime) -> str:
+        date_today = target_date.strftime("%B %d, %Y")
         prompt = get_prompt(PromptType.GET_HOLIDAYS, date_today)
         system_message = get_system_message(PromptType.GET_HOLIDAYS)
 
@@ -74,6 +77,8 @@ class OpenAIClient:
             if not url:
                 raise ValueError("OpenAI image URL is blank.")
 
+            # TODO(john): validate URL shape here
+
             return url
 
         except (IndexError, AttributeError, KeyError) as e:
@@ -104,6 +109,8 @@ class OpenAIClient:
 
 if __name__ == "__main__":
     # Live tests. Remove when launching.
+    # TODO(john): remove all of this once daily_image_generator tests
+    # succeed.
     from server.s3_client import S3ClientFactory
     from server.db_accessor import DBAccessor
     from server.models import Prompt
@@ -121,17 +128,20 @@ if __name__ == "__main__":
 
         client = OpenAIClient()
 
+        # This returns a list of holidays for the current date.
+        current_date = datetime.now()
         holiday_prompt = Prompt(
             prompt_text="",
-            prompt_date=datetime.now(),
+            prompt_date=current_date,
             prompt_type=PromptType.GET_HOLIDAYS,
             status=TaskStatus.PENDING,
         )
 
         with db_accessor.session_scope():
             db_accessor.add(holiday_prompt)
+
         try:
-            holiday_list = client.fetch_holiday_list()
+            holiday_list = client.fetch_holiday_list(current_date)
         except Exception as e:
             with db_accessor.session_scope():
                 holiday_prompt.status = TaskStatus.FAILED
@@ -144,7 +154,7 @@ if __name__ == "__main__":
 
         new_image_prompt = Prompt(
             prompt_text="",
-            prompt_date=datetime.now(),
+            prompt_date=current_date,
             prompt_type=PromptType.GENERATE_IMAGE_HAPPY,
             status=TaskStatus.PENDING,
         )
@@ -192,7 +202,7 @@ if __name__ == "__main__":
 
         # Save image to S3.
         try:
-            curr_date_str = datetime.now().strftime("%d-%b-%Y").upper()
+            curr_date_str = current_date.strftime("%d-%b-%Y").upper()
             file_name = f"{PromptType.GENERATE_IMAGE_HAPPY.value}-{curr_date_str}"
             u_file_name = client.generate_unique_file_name(file_name)
             s3_image_url = s3_client.save_image_to_s3(
@@ -212,7 +222,7 @@ if __name__ == "__main__":
             image_link_id=new_image_link.id,
             image_link=new_image_link,
             prompt_type=PromptType.GENERATE_IMAGE_HAPPY,
-            prompt_date=datetime.now(),
+            prompt_date=current_date,
             status=TaskStatus.PENDING,
         )
 
@@ -222,8 +232,9 @@ if __name__ == "__main__":
         try:
             print(f"{s3_image_url=}")
             pre_signed_url = s3_client.fetch_presigned_url(
-                u_file_name
-            )  # explicit expiration date settings
+                u_file_name,
+                AWS_PRESIGNED_URL_EXPIRATION_SECONDS,
+            )
             print(f"{pre_signed_url=}")
         except Exception as e:
             with db_accessor.session_scope():
@@ -237,13 +248,14 @@ if __name__ == "__main__":
             db_accessor.query(DailyImageVersion).filter(
                 DailyImageVersion.prompt_type == PromptType.GENERATE_IMAGE_HAPPY,
                 DailyImageVersion.is_active,
+                # not entirely necessary
                 DailyImageVersion.id != daily_image_version.id,
             ).update({DailyImageVersion.is_active: False})
 
         with db_accessor.session_scope():
             daily_image_version.presigned_url = pre_signed_url
-            daily_image_version.presigned_url_expiry = datetime.now() + timedelta(
-                seconds=3600 * 24
+            daily_image_version.presigned_url_expiry = current_date + timedelta(
+                seconds=AWS_PRESIGNED_URL_EXPIRATION_SECONDS
             )
             daily_image_version.status = TaskStatus.COMPLETED
             daily_image_version.is_active = True

@@ -1,23 +1,30 @@
 import os
-from app import db
-from server.models import Base
 from contextlib import contextmanager
 from sqlalchemy.orm import Query
+from server.models import Base
 
 
 class DBAccessor:
     _instance: Base = None
-    _db = db
+    _db = None
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super(DBAccessor, cls).__new__(cls, *args, **kwargs)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self, db_instance=None):
         if getattr(self, "_initialized", False):
             return
         self._initialized = True
+        
+        # Set the database instance
+        if db_instance:
+            self._db = db_instance
+        elif not self._db:
+            # Import here to avoid circular import
+            from app import db
+            self._db = db
 
         # TODO(john): set this up on heroku
         self.write_enabled = os.getenv("WRITE_ENABLED", "false").lower() == "true"

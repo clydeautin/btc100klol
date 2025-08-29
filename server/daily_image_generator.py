@@ -1,20 +1,22 @@
 from datetime import datetime, timedelta
 
-from server.s3_client import S3Client
+from server.s3_client import S3ClientFactory
 from server.db_accessor import DBAccessor
 from server.models import Prompt, DailyImageVersion
 from openai_files.openai_client import OpenAIClient
-from const import PromptType
+from openai_files.utils import PromptType
 from server.models.utils import TaskStatus
 from server.models.image_link import ImageLink
 from openai_files.helpers import get_prompt
+
+from const import AWS_PRESIGNED_URL_EXPIRATION_SECONDS
 
 
 class DailyImageGenerator:
     def __init__(
         self,
         openai_client: OpenAIClient,
-        s3_client: S3Client,
+        s3_client: S3ClientFactory,
         db_accessor: DBAccessor,
     ):
         self.openai_client = openai_client
@@ -29,7 +31,7 @@ class DailyImageGenerator:
     ) -> list[DailyImageVersion]:
         # Get holiday list
         holiday_prompt_record = self._create_holiday_prompt_record(target_date)
-        holiday_list = self._fetch_holiday_list(holiday_prompt_record)
+        holiday_list = self._fetch_holiday_list(holiday_prompt_record, target_date)
 
         daily_versions: list[DailyImageVersion] = []
 
@@ -66,13 +68,13 @@ class DailyImageGenerator:
             session.add(prompt)
         return prompt
 
-    def _fetch_holiday_list(self, prompt: Prompt) -> str:
+    def _fetch_holiday_list(self, prompt: Prompt, target_date: datetime) -> str:
         status = TaskStatus.FAILED
         holiday_list = ""
         error: Exception | None = None
 
         try:
-            holiday_list = self.openai_client.fetch_holiday_list()
+            holiday_list = self.openai_client.fetch_holiday_list(target_date)
             status = TaskStatus.COMPLETED
         except Exception as e:
             holiday_list = str(e)
@@ -101,7 +103,9 @@ class DailyImageGenerator:
 
     def _generate_image_prompt(self, prompt: Prompt, holiday_list: str) -> str:
         # TODO(john): Extract try/except -> merge -> write to its own helper
-        # to DRY this up. Challenge will be to pass db column names
+        # to DRY this up. Challenge will be to pass db column names.
+        # It's probably easier to just pass the entire function to the helper
+        # or make it a decorator. Not high priority.
         status = TaskStatus.FAILED
         image_prompt_text = ""
         error: Exception | None = None
@@ -180,7 +184,7 @@ class DailyImageGenerator:
         if error:
             raise error
 
-        return s3_image_url
+        return u_file_name
 
     def _create_daily_version(
         self, image_link: ImageLink, prompt_type: PromptType
@@ -199,7 +203,7 @@ class DailyImageGenerator:
     def _finalize_daily_version(
         self,
         version: DailyImageVersion,
-        s3_url: str,
+        file_name: str,
         presigned_url_expiry: datetime,
     ) -> None:
         status = TaskStatus.FAILED
@@ -208,8 +212,8 @@ class DailyImageGenerator:
 
         try:
             presigned_url = self.s3_client.fetch_presigned_url(
-                s3_url,
-                presigned_url_expiry,
+                file_name,
+                AWS_PRESIGNED_URL_EXPIRATION_SECONDS,
             )
             status = TaskStatus.COMPLETED
         except Exception as e:
@@ -232,9 +236,7 @@ class DailyImageGenerator:
             attached_version.presigned_url = presigned_url
             attached_version.status = status
             attached_version.presigned_url_expiry = (
-                datetime.now() + timedelta(seconds=presigned_url_expiry)
-                if is_success
-                else None
+                presigned_url_expiry if is_success else None
             )
             attached_version.is_active = is_success
 

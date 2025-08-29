@@ -14,7 +14,8 @@ from .helpers import get_prompt, get_system_message
 from .openai_exceptions import OpenAIClientError
 from .utils import PromptType
 from server.db_accessor import DBAccessor
-from server.models import Prompt, DailyImageVersion
+
+# from server.models import Prompt, DailyImageVersion
 
 load_dotenv()
 
@@ -119,7 +120,9 @@ if __name__ == "__main__":
     from openai_files.utils import PromptType
     from server.models.utils import TaskStatus
     from app import create_app
+    from server.daily_image_generator import DailyImageGenerator
 
+    # This is what should happen on the cron task.
     app = create_app()
 
     with app.app_context():
@@ -130,132 +133,15 @@ if __name__ == "__main__":
 
         # This returns a list of holidays for the current date.
         current_date = datetime.now()
-        holiday_prompt = Prompt(
-            prompt_text="",
-            prompt_date=current_date,
-            prompt_type=PromptType.GET_HOLIDAYS,
-            status=TaskStatus.PENDING,
+
+        daily_image_generator = DailyImageGenerator(
+            openai_client=client,
+            s3_client=s3_client,
+            db_accessor=db_accessor,
         )
 
-        with db_accessor.session_scope():
-            db_accessor.add(holiday_prompt)
-
-        try:
-            holiday_list = client.fetch_holiday_list(current_date)
-        except Exception as e:
-            with db_accessor.session_scope():
-                holiday_prompt.status = TaskStatus.FAILED
-                holiday_prompt.prompt_text = str(e)
-            raise e
-
-        with db_accessor.session_scope():
-            holiday_prompt.prompt_text = holiday_list
-            holiday_prompt.status = TaskStatus.COMPLETED
-
-        new_image_prompt = Prompt(
-            prompt_text="",
-            prompt_date=current_date,
-            prompt_type=PromptType.GENERATE_IMAGE_HAPPY,
-            status=TaskStatus.PENDING,
+        daily_image_generator.generate_daily_images(
+            [PromptType.GENERATE_IMAGE_HAPPY, PromptType.GENERATE_IMAGE_SAD],
+            current_date,
+            current_date + timedelta(seconds=int(AWS_PRESIGNED_URL_EXPIRATION_SECONDS)),
         )
-
-        with db_accessor.session_scope():
-            db_accessor.add(new_image_prompt)
-
-        try:
-            holiday_image_prompt = get_prompt(
-                PromptType.GENERATE_IMAGE_HAPPY, holiday_list
-            )
-        except Exception as e:
-            with db_accessor.session_scope():
-                new_image_prompt.status = TaskStatus.FAILED
-                new_image_prompt.prompt_text = str(e)
-            raise e
-
-        with db_accessor.session_scope():
-            new_image_prompt.prompt_text = holiday_image_prompt
-            new_image_prompt.status = TaskStatus.COMPLETED
-
-        new_image_link = ImageLink(
-            prompt_id=new_image_prompt.id,
-            openai_image_url="",
-            status=TaskStatus.PENDING,
-        )
-
-        with db_accessor.session_scope():
-            db_accessor.add(new_image_link)
-
-        print(f"{holiday_image_prompt=}")
-        try:
-            holiday_image_openai_url = client.fetch_generated_image_url(
-                holiday_image_prompt
-            )
-        except Exception as e:
-            with db_accessor.session_scope():
-                new_image_link.status = TaskStatus.FAILED
-                new_image_link.openai_image_url = str(e)
-            raise e
-
-        with db_accessor.session_scope():
-            new_image_link.openai_image_url = holiday_image_openai_url
-            new_image_link.status = TaskStatus.PROCESSING
-
-        # Save image to S3.
-        try:
-            curr_date_str = current_date.strftime("%d-%b-%Y").upper()
-            file_name = f"{PromptType.GENERATE_IMAGE_HAPPY.value}-{curr_date_str}"
-            u_file_name = client.generate_unique_file_name(file_name)
-            s3_image_url = s3_client.save_image_to_s3(
-                holiday_image_openai_url, u_file_name
-            )
-        except Exception as e:
-            with db_accessor.session_scope():
-                new_image_link.status = TaskStatus.FAILED
-                new_image_link.s3_image_url = str(e)
-            raise e
-
-        with db_accessor.session_scope():
-            new_image_link.s3_image_url = s3_image_url
-            new_image_link.status = TaskStatus.COMPLETED
-
-        daily_image_version = DailyImageVersion(
-            image_link_id=new_image_link.id,
-            image_link=new_image_link,
-            prompt_type=PromptType.GENERATE_IMAGE_HAPPY,
-            prompt_date=current_date,
-            status=TaskStatus.PENDING,
-        )
-
-        with db_accessor.session_scope():
-            db_accessor.add(daily_image_version)
-
-        try:
-            print(f"{s3_image_url=}")
-            pre_signed_url = s3_client.fetch_presigned_url(
-                u_file_name,
-                AWS_PRESIGNED_URL_EXPIRATION_SECONDS,
-            )
-            print(f"{pre_signed_url=}")
-        except Exception as e:
-            with db_accessor.session_scope():
-                daily_image_version.status = TaskStatus.FAILED
-                daily_image_version.error = str(e)
-            raise e
-
-        # deactivate all other daily image versions of this prompt type
-        # TODO(john): re-activate previous daily image version if this one fails.
-        with db_accessor.session_scope():
-            db_accessor.query(DailyImageVersion).filter(
-                DailyImageVersion.prompt_type == PromptType.GENERATE_IMAGE_HAPPY,
-                DailyImageVersion.is_active,
-                # not entirely necessary
-                DailyImageVersion.id != daily_image_version.id,
-            ).update({DailyImageVersion.is_active: False})
-
-        with db_accessor.session_scope():
-            daily_image_version.presigned_url = pre_signed_url
-            daily_image_version.presigned_url_expiry = current_date + timedelta(
-                seconds=AWS_PRESIGNED_URL_EXPIRATION_SECONDS
-            )
-            daily_image_version.status = TaskStatus.COMPLETED
-            daily_image_version.is_active = True

@@ -43,8 +43,12 @@ class DBAccessor:
     def query(self, *args, **kwargs) -> Query:
         return self._db.session.query(*args, **kwargs)
 
+    def merge(self, instance: Base) -> Base:
+        return self._db.session.merge(instance)
+
     @contextmanager
     def session_scope(self):
+        session = self._db.session
         if not self.write_enabled:
             # No-op session prevents db writes
             class WriteDisabledSession:
@@ -70,11 +74,14 @@ class DBAccessor:
                     # maybe we allow reads?
                     pass
 
-            yield WriteDisabledSession()
+                def merge(self, instance, *a, **kw):
+                    pass
+
+            yield session
             return
 
         try:
-            yield
+            yield session
             self.commit()
         except Exception:
             self.rollback()

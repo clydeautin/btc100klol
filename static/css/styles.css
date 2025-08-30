@@ -1,28 +1,337 @@
-body, h1 {
+/* Reset and base styles */
+* {
     margin: 0;
-    padding:0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-    font-family: Arial, Helvetica, sans-serif;
-}
-
-h1 {
-    text-align: center;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
     color: #333;
-    background-color: #f0f0f0;
-    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
 }
 
-.content{
-    max-width: 600px;
+.container {
+    max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
-form{
-    background-color: #f9f9f9;
-    padding: 20px;
+/* Header */
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+    color: white;
+}
+
+.title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    font-weight: 400;
+}
+
+/* Main content */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+/* Status card */
+.status-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.status-card.above-100k {
+    border: 3px solid #10b981;
+    background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+}
+
+.status-card.below-100k {
+    border: 3px solid #f59e0b;
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+}
+
+/* Message section */
+.message-section {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.status-message {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 10px;
+}
+
+/* Price section */
+.price-section {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.price-label {
+    font-size: 1rem;
+    color: #6b7280;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.price-value {
+    font-size: 4rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 20px;
+    font-variant-numeric: tabular-nums;
+}
+
+.price-value.error {
+    color: #ef4444;
+    font-size: 2rem;
+}
+
+.error-message {
+    color: #dc2626;
+    font-size: 1rem;
+    margin-top: 10px;
+}
+
+.celebration {
+    font-size: 2rem;
+    color: #10b981;
+    font-weight: 700;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
+}
+
+.target {
+    font-size: 1.2rem;
+    color: #6b7280;
+    margin-bottom: 20px;
+}
+
+/* Progress bar */
+.progress-container {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f59e0b 0%, #10b981 100%);
+    border-radius: 10px;
+    transition: width 0.5s ease;
+}
+
+.progress-text {
+    font-size: 0.9rem;
+    color: #6b7280;
+    font-weight: 600;
+}
+
+/* Image section */
+.image-section {
+    text-align: center;
+}
+
+.image-container {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.mood-image {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease;
+}
+
+.mood-image:hover {
+    transform: scale(1.05);
+}
+
+.image-caption {
+    margin-top: 15px;
+    font-size: 1.1rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Info section */
+.info-section {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.info-card {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.info-card h3 {
+    font-size: 1.5rem;
+    color: #1f2937;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.info-card p {
+    color: #4b5563;
+    line-height: 1.7;
+}
+
+.refresh-info {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.refresh-info p {
+    color: #4b5563;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.refresh-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 15px;
+}
+
+.refresh-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* Footer */
+.footer {
+    margin-top: 50px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+}
+
+.footer-links {
+    margin-top: 10px;
+}
+
+.health-link {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    padding: 5px 10px;
     border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease;
+}
+
+.health-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .title {
+        font-size: 2.5rem;
+    }
+    
+    .subtitle {
+        font-size: 1rem;
+    }
+    
+    .status-card {
+        padding: 25px;
+    }
+    
+    .status-message {
+        font-size: 1.5rem;
+    }
+    
+    .price-value {
+        font-size: 2.5rem;
+    }
+    
+    .info-section {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .info-card, .refresh-info {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .title {
+        font-size: 2rem;
+    }
+    
+    .status-message {
+        font-size: 1.2rem;
+    }
+    
+    .price-value {
+        font-size: 2rem;
+    }
+    
+    .celebration {
+        font-size: 1.5rem;
+    }
 }

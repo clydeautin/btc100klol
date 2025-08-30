@@ -1,5 +1,6 @@
 import requests  # type: ignore
 import os
+import json
 import logging
 from dotenv import load_dotenv  # change this to pull in API key from Const file
 

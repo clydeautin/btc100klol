@@ -4,7 +4,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import os
 import logging
-from app import db
+from extensions import db
 
 # Import our custom modules
 from facades.cmc_facade import get_btc_price, CMCApiError

@@ -88,7 +88,7 @@ def create_app():
     @app.route("/health")
     def health_check():
         """Simple health check endpoint"""
-        return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+        return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
 
     return app
 
@@ -142,28 +142,14 @@ def get_current_image(prompt_type: PromptType) -> str:
             DailyImageVersion.is_active == True,
             DailyImageVersion.status == TaskStatus.COMPLETED,
             DailyImageVersion.presigned_url.isnot(None),
-            DailyImageVersion.presigned_url_expiry > datetime.now()
-        ).order_by(DailyImageVersion.prompt_date.desc()).first()
+            DailyImageVersion.presigned_url_expiry > datetime.utcnow()
+        ).one()
         
         if latest_version and latest_version.presigned_url:
             logger.info(f"Found active image for {prompt_type.value}")
             return latest_version.presigned_url
-        else:
-            logger.warning(f"No active image found for {prompt_type.value}, using local images")
-            # Fall back to local images
-            from flask import url_for
-            if prompt_type == PromptType.GENERATE_IMAGE_HAPPY:
-                try:
-                    return url_for('static', filename='images/happy_investor_btc100k_lol.png')
-                except:
-                    pass
-            elif prompt_type == PromptType.GENERATE_IMAGE_SAD:
-                try:
-                    return url_for('static', filename='images/sad_investor_btc100k_lol.png')
-                except:
-                    pass
-            return DEFAULT_IMAGE_URL
-            
+        raise Exception(f"No active image found for {prompt_type.value}")
+
     except Exception as e:
         logger.error(f"Error fetching image for {prompt_type.value}: {e}")
         # Fall back to local images on error
@@ -180,6 +166,7 @@ def get_current_image(prompt_type: PromptType) -> str:
 
 if __name__ == "__main__":
     app = create_app()
-    port = int(os.environ.get("PORT", 5001))
+    port = int(os.environ.get("PORT", 5000))
     print(f"🚀 Starting BTC 100K LOL on http://localhost:{port}")
-    app.run(host="0.0.0.0", port=port, debug=True)
+    debug = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
+    app.run(host="0.0.0.0", port=port, debug=debug)

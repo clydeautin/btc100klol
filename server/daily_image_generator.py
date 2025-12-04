@@ -10,6 +10,9 @@ from server.models.image_link import ImageLink
 from openai_files.helpers import get_prompt
 
 from const import AWS_PRESIGNED_URL_EXPIRATION_SECONDS
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class DailyImageGenerator:
@@ -29,29 +32,44 @@ class DailyImageGenerator:
         target_date: datetime,
         presigned_url_expiry: datetime,
     ) -> list[DailyImageVersion]:
+        logger.info(f"Starting daily image generation for target date: {target_date}")
+        
         # Get holiday list
+        logger.info("Fetching holiday list...")
         holiday_prompt_record = self._create_holiday_prompt_record(target_date)
         holiday_list = self._fetch_holiday_list(holiday_prompt_record, target_date)
+        logger.info(f"Holiday list fetched: {len(holiday_list)} chars")
 
         daily_versions: list[DailyImageVersion] = []
 
         # Generate image prompts
         for prompt_type in prompt_types:
+            logger.info(f"Processing prompt type: {prompt_type.value}")
             image_prompt_record = self._create_image_prompt_record(prompt_type)
+            
+            logger.info("Generating image prompt...")
             image_prompt_text = self._generate_image_prompt(
                 image_prompt_record, holiday_list
             )
+            logger.info(f"Image prompt generated: {len(image_prompt_text)} chars")
 
             # Generate and save image
             image_link = self._create_image_link(image_prompt_record)
+            
+            logger.info("Generating image via OpenAI...")
             openai_url = self._generate_image(image_link, image_prompt_text)
+            
+            logger.info("Saving image to S3...")
             s3_url = self._save_to_s3(image_link, openai_url, target_date)
+            logger.info(f"Image saved to S3: {s3_url}")
 
             # Create and finalize daily version
             daily_version = self._create_daily_version(image_link, prompt_type)
             self._finalize_daily_version(daily_version, s3_url, presigned_url_expiry)
             daily_versions.append(daily_version)
+            logger.info(f"Daily version finalized for {prompt_type.value}")
 
+        logger.info("Daily image generation completed successfully")
         return daily_versions
 
     def _create_holiday_prompt_record(

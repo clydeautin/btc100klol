@@ -16,8 +16,12 @@ from const import DEFAULT_IMAGE_URL
 
 load_dotenv()
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+from server.logging_config import configure_logging
+import time
+from flask import request
+
+# Configure logging immediately
+configure_logging()
 logger = logging.getLogger(__name__)
 
 # Initialize database outside of create_app to avoid circular imports
@@ -31,6 +35,14 @@ def create_app():
     # Create application context for database operations
     with app.app_context():
         pass
+
+    @app.after_request
+    def log_request(response):
+        # Log the request details
+        logger.info(
+            f"{request.method} {request.path} {response.status_code}"
+        )
+        return response
 
     @app.route("/")
     def home():

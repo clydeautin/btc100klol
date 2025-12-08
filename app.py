@@ -94,7 +94,7 @@ def create_app():
     @app.route("/health")
     def health_check():
         """Simple health check endpoint"""
-        return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+        return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
 
     return app
 
@@ -147,6 +147,7 @@ def get_current_image(prompt_type: PromptType) -> str:
         db_accessor = DBAccessor()
 
         # Query for the most recent active image of the specified type
+
         latest_version = (
             db_accessor.query(DailyImageVersion)
             .filter(
@@ -186,6 +187,7 @@ def get_current_image(prompt_type: PromptType) -> str:
                     pass
             return DEFAULT_IMAGE_URL
 
+
     except Exception as e:
         logger.error(f"Error fetching image for {prompt_type.value}: {e}")
         # Fall back to local images on error
@@ -205,6 +207,7 @@ def get_current_image(prompt_type: PromptType) -> str:
 
 if __name__ == "__main__":
     app = create_app()
-    port = int(os.environ.get("PORT", 5001))
+    port = int(os.environ.get("PORT", 5000))
     print(f"🚀 Starting BTC 100K LOL on http://localhost:{port}")
-    app.run(host="0.0.0.0", port=port, debug=True)
+    debug = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
+    app.run(host="0.0.0.0", port=port, debug=debug)

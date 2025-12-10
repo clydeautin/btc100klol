@@ -27,8 +27,7 @@ def get_btc_price():
         raise CMCApiError("CMC API Key not found in environment variables")
 
     try:
-        response = requests.get(url, params=parameters, headers=headers, timeout
-        =10)
+        response = requests.get(url, params=parameters, headers=headers, timeout=10)
         response.raise_for_status()  # Raise an HTTPError for bad responses
 
         data = response.json()

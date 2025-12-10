@@ -14,6 +14,9 @@ from server.models.utils import TaskStatus
 from openai_files.utils import PromptType
 from const import DEFAULT_IMAGE_URL
 
+#Import holiday list
+from server.models.prompt import Prompt
+
 load_dotenv()
 
 from server.logging_config import configure_logging
@@ -73,6 +76,8 @@ def create_app():
                 message = (
                     f"😅 Bitcoin is at ${btc_price:,.2f} - Still waiting for $100K..."
                 )
+            # grab the daily holidays
+            holiday_prompt = get_current_holidays()
 
             return render_template(
                 "index.html",
@@ -80,6 +85,7 @@ def create_app():
                 price=btc_price,
                 image_url=image_url,
                 is_above_100k=is_above_100k,
+                holidays=holiday_prompt,
             )
 
         except CMCApiError as e:
@@ -213,6 +219,35 @@ def get_current_image(prompt_type: PromptType) -> str:
         except:
             pass
         return DEFAULT_IMAGE_URL
+
+
+
+def get_current_holidays() -> str:
+    """
+    Get the current holidays from the database.
+    """
+    try:
+        db_accessor = DBAccessor()
+
+        # Query for the most recent holiday prompt
+        latest_prompt = (
+            db_accessor.query(Prompt)
+            .filter(
+                Prompt.prompt_type == PromptType.GET_HOLIDAYS,
+                Prompt.status == TaskStatus.COMPLETED,
+            )
+            .order_by(Prompt.prompt_date.desc())
+            .first()
+        )
+
+        if latest_prompt:
+            return latest_prompt.prompt_text
+
+        return "No holidays found for today."
+
+    except Exception as e:
+        logger.error(f"Error fetching holidays: {e}")
+        return "Unable to fetch holidays."
 
 
 if __name__ == "__main__":

@@ -169,6 +169,79 @@ body {
     font-weight: 600;
 }
 
+/* Holidays Section */
+.holidays-section {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    text-align: left;
+    width: 100%;
+}
+
+.holidays-title {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #6b7280;
+    margin-bottom: 0.8rem;
+    font-weight: 600;
+}
+
+.holidays-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* Custom scrollbar for holiday list */
+.holidays-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.holidays-list::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.holidays-list::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+}
+
+.holiday-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+.holiday-item:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.holiday-name {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.95rem;
+}
+
+.holiday-desc {
+    font-size: 0.85rem;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+.no-holidays {
+    color: #9ca3af;
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
 /* Image section */
 .image-section {
     text-align: center;

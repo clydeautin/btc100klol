@@ -222,9 +222,10 @@ def get_current_image(prompt_type: PromptType) -> str:
 
 
 
-def get_current_holidays() -> str:
+def get_current_holidays() -> list[dict[str, str]]:
     """
-    Get the current holidays from the database.
+    Get the current holidays from the database and parse them into a structured list.
+    Returns a list of dicts: [{'name': 'Holiday Name', 'description': 'Description'}]
     """
     try:
         db_accessor = DBAccessor()
@@ -240,14 +241,46 @@ def get_current_holidays() -> str:
             .first()
         )
 
-        if latest_prompt:
-            return latest_prompt.prompt_text
+        if not latest_prompt or not latest_prompt.prompt_text:
+            return []
 
-        return "No holidays found for today."
+        # Parse the raw text
+        holidays = []
+        raw_lines = latest_prompt.prompt_text.split('\n')
+        
+        for line in raw_lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Remove leading bullet points if present
+            if line.startswith('- ') or line.startswith('* '):
+                line = line[2:]
+            
+            # Split into name and description
+            # We look for " - " or ": " as separators
+            parts = []
+            if " - " in line:
+                parts = line.split(" - ", 1)
+            elif ": " in line:
+                parts = line.split(": ", 1)
+            else:
+                # If no separator found, treat whole line as name
+                parts = [line, ""]
+                
+            name = parts[0].strip()
+            description = parts[1].strip() if len(parts) > 1 else ""
+            
+            holidays.append({
+                "name": name,
+                "description": description
+            })
+            
+        return holidays
 
     except Exception as e:
         logger.error(f"Error fetching holidays: {e}")
-        return "Unable to fetch holidays."
+        return []
 
 
 if __name__ == "__main__":

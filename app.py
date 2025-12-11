@@ -39,14 +39,6 @@ def create_app():
     with app.app_context():
         pass
 
-    @app.after_request
-    def log_request(response):
-        # Log the request details
-        logger.info(
-            f"{request.method} {request.path} {response.status_code}"
-        )
-        return response
-
     @app.route("/")
     def home():
         # Check if we're in demo mode (no API keys)

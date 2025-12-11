@@ -51,7 +51,6 @@ class DailyImageGenerator:
             image_prompt_text = self._generate_image_prompt(
                 image_prompt_record, holiday_list
             )
-            logger.info(f"Image prompt generated: {len(image_prompt_text)} chars")
 
             # Generate and save image
             image_link = self._create_image_link(image_prompt_record)
@@ -59,9 +58,7 @@ class DailyImageGenerator:
             logger.info("Generating image via OpenAI...")
             openai_url = self._generate_image(image_link, image_prompt_text)
             
-            logger.info("Saving image to S3...")
             s3_url = self._save_to_s3(image_link, openai_url, target_date)
-            logger.info(f"Image saved to S3: {s3_url}")
 
             # Create and finalize daily version
             daily_version = self._create_daily_version(image_link, prompt_type)

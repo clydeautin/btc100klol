@@ -24,7 +24,3 @@ def configure_logging():
         root_logger.handlers.clear()
         
     root_logger.addHandler(handler)
-
-    # Set specific levels for noisy libraries if needed
-    logging.getLogger("werkzeug").setLevel(logging.WARNING)
-    logging.getLogger("urllib3").setLevel(logging.WARNING)

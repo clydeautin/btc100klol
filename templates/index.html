@@ -1,100 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BTC 100K LOL - Bitcoin Price Tracker</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <script>
-        // Auto-refresh every 5 minutes
-        setTimeout(function(){
-            window.location.reload();
-        }, 300000);
-    </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BTC 100K LOL - Bitcoin Price Tracker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script>
+    // Auto-refresh every 5 minutes
+    setTimeout(function () {
+      window.location.reload();
+    }, 300000);
+  </script>
 </head>
+
 <body>
-    <div class="container">
-        <header class="header">
-            <h1 class="title">🚀 BTC 100K LOL</h1>
-            <p class="subtitle">The Ultimate Bitcoin $100K Mood Tracker</p>
-        </header>
+  <div class="container">
+    <header class="header">
+      <h1 class="title">🚀 BTC 100K LOL</h1>
+      <p class="subtitle">The Ultimate Bitcoin $100K Mood Tracker</p>
+    </header>
 
-        <main class="main-content">
-            <div class="status-card {{ 'above-100k' if is_above_100k else 'below-100k' }}">
-                <div class="message-section">
-                    <h2 class="status-message">{{ message }}</h2>
-                </div>
+    <main class="main-content">
+      <div class="status-card {{ 'above-100k' if is_above_100k else 'below-100k' }}">
+        <div class="message-section">
+          <h2 class="status-message">{{ message }}</h2>
+        </div>
 
-                <div class="price-section">
-                    <div class="price-label">Current Bitcoin Price</div>
-                    {% if price != "N/A" %}
-                        <div class="price-value">${{ "{:,.2f}".format(price) }}</div>
-                        <div class="price-target">
-                            {% if is_above_100k %}
-                                <span class="celebration">🎉 WE DID IT! 🎉</span>
-                            {% else %}
-                                <span class="target">Target: $100,000.00</span>
-                                <div class="progress-container">
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: {{ (price / 100000 * 100) | round(1) }}%"></div>
-                                    </div>
-                                    <div class="progress-text">{{ ((price / 100000 * 100) | round(1)) }}% to $100K</div>
-                                </div>
-                            {% endif %}
-                        </div>
-                    {% else %}
-                        <div class="price-value error">{{ price }}</div>
-                        {% if error %}
-                            <div class="error-message">{{ error }}</div>
-                        {% endif %}
-                    {% endif %}
-                </div>
-
-                <div class="image-section">
-                    <div class="image-container">
-                        <img src="{{ image_url }}" alt="Crypto Investor Mood" class="mood-image">
-                        <div class="image-caption">
-                            {% if is_above_100k %}
-                                Today's Celebration Mood 🥳
-                            {% else %}
-                                Today's Hodler Mood 😅
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
+        <div class="price-section">
+          <div class="price-label">Current Bitcoin Price</div>
+          {% if price != "N/A" %}
+          <div class="price-value">${{ "{:,.2f}".format(price) }}</div>
+          <div class="price-target">
+            {% if is_above_100k %}
+            <span class="celebration">🎉 WE DID IT! 🎉</span>
+            {% else %}
+            <span class="target">Target: $100,000.00</span>
+            <div class="progress-container">
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ (price / 100000 * 100) | round(1) }}%"></div>
+              </div>
+              <div class="progress-text">{{ ((price / 100000 * 100) | round(1)) }}% to $100K</div>
             </div>
+            {% endif %}
+          </div>
+          {% else %}
+          <div class="price-value error">{{ price }}</div>
+          {% if error %}
+          <div class="error-message">{{ error }}</div>
+          {% endif %}
+          {% endif %}
+        </div>
 
-            <div class="info-section">
-                <div class="info-card">
-                    <h3>How it works</h3>
-                    {% if demo_mode %}
-                        <p><strong>🎭 Demo Mode:</strong> This is a demonstration with simulated Bitcoin prices. 
-                           To use real data, configure your API keys in the .env file.</p>
-                        <p>In production, we fetch the latest Bitcoin price from CoinMarketCap and generate daily themed images based on current holidays. 
-                           If Bitcoin is above $100K, you get a happy crypto investor. Otherwise, you get a relatable 
-                           "still waiting" mood image!</p>
-                    {% else %}
-                        <p>We fetch the latest Bitcoin price and generate daily themed images based on current holidays. 
-                           If Bitcoin is above $100K, you get a happy crypto investor. Otherwise, you get a relatable 
-                           "still waiting" mood image!</p>
-                    {% endif %}
-                </div>
-
-                <div class="refresh-info">
-                    <p>🔄 Page auto-refreshes every 5 minutes</p>
-                    <p>📅 Images update daily with new holiday themes</p>
-                    <button onclick="window.location.reload()" class="refresh-btn">Refresh Now</button>
-                </div>
+        <div class="image-section">
+          <div class="image-container">
+            <img src="{{ image_url }}" alt="Crypto Investor Mood" class="mood-image">
+            <div class="image-caption">
+              {% if is_above_100k %}
+              Today's Celebration Mood 🥳
+              {% else %}
+              Today's Hodler Mood 😅
+              {% endif %}
             </div>
-        </main>
-
-        <footer class="footer">
-            <p>Built with ❤️ for the Bitcoin community | Data from CoinMarketCap | Images by OpenAI</p>
-            <div class="footer-links">
-                <a href="/health" class="health-link">System Status</a>
+            <div class="holidays-section">
+              <h4 class="holidays-title">Today's Holidays</h4>
+              <div class="holidays-list">
+                {% if holidays %}
+                {% for holiday in holidays %}
+                <div class="holiday-item">
+                  <span class="holiday-name">{{ holiday.name }}</span>
+                  {% if holiday.description %}
+                  <span class="holiday-desc">{{ holiday.description }}</span>
+                  {% endif %}
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="no-holidays">No holiday data available today.</p>
+                {% endif %}
+              </div>
             </div>
-        </footer>
-    </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-card">
+          <h3>How it works</h3>
+          {% if demo_mode %}
+          <p><strong>🎭 Demo Mode:</strong> This is a demonstration with simulated Bitcoin prices.
+            To use real data, configure your API keys in the .env file.</p>
+          <p>In production, we fetch the latest Bitcoin price from CoinMarketCap and generate daily themed images based
+            on current holidays.
+            If Bitcoin is above $100K, you get a happy crypto investor. Otherwise, you get a relatable
+            "still waiting" mood image!</p>
+          {% else %}
+          <p>We fetch the latest Bitcoin price and generate daily themed images based on current holidays.
+            If Bitcoin is above $100K, you get a happy crypto investor. Otherwise, you get a relatable
+            "still waiting" mood image!</p>
+          {% endif %}
+        </div>
+
+        <div class="refresh-info">
+          <p>🔄 Page auto-refreshes every 5 minutes</p>
+          <p>📅 Images update daily with new holiday themes</p>
+          <button onclick="window.location.reload()" class="refresh-btn">Refresh Now</button>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <p>Built with ❤️ for the Bitcoin community | Data from CoinMarketCap | Images by OpenAI</p>
+      <div class="footer-links">
+        <a href="/health" class="health-link">System Status</a>
+      </div>
+    </footer>
+  </div>
 </body>
+
 </html>

@@ -14,10 +14,17 @@ from server.models.utils import TaskStatus
 from openai_files.utils import PromptType
 from const import DEFAULT_IMAGE_URL
 
+#Import holiday list
+from server.models.prompt import Prompt
+
 load_dotenv()
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+from server.logging_config import configure_logging
+import time
+from flask import request
+
+# Configure logging immediately
+configure_logging()
 logger = logging.getLogger(__name__)
 
 # Initialize database outside of create_app to avoid circular imports
@@ -61,6 +68,8 @@ def create_app():
                 message = (
                     f"😅 Bitcoin is at ${btc_price:,.2f} - Still waiting for $100K..."
                 )
+            # grab the daily holidays
+            holiday_prompt = get_current_holidays()
 
             return render_template(
                 "index.html",
@@ -68,6 +77,7 @@ def create_app():
                 price=btc_price,
                 image_url=image_url,
                 is_above_100k=is_above_100k,
+                holidays=holiday_prompt,
             )
 
         except CMCApiError as e:
@@ -203,6 +213,68 @@ def get_current_image(prompt_type: PromptType) -> str:
         except:
             pass
         return DEFAULT_IMAGE_URL
+
+
+
+def get_current_holidays() -> list[dict[str, str]]:
+    """
+    Get the current holidays from the database and parse them into a structured list.
+    Returns a list of dicts: [{'name': 'Holiday Name', 'description': 'Description'}]
+    """
+    try:
+        db_accessor = DBAccessor()
+
+        # Query for the most recent holiday prompt
+        latest_prompt = (
+            db_accessor.query(Prompt)
+            .filter(
+                Prompt.prompt_type == PromptType.GET_HOLIDAYS,
+                Prompt.status == TaskStatus.COMPLETED,
+            )
+            .order_by(Prompt.prompt_date.desc())
+            .first()
+        )
+
+        if not latest_prompt or not latest_prompt.prompt_text:
+            return []
+
+        # Parse the raw text
+        holidays = []
+        raw_lines = latest_prompt.prompt_text.split('\n')
+        
+        for line in raw_lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Remove leading bullet points if present
+            if line.startswith('- ') or line.startswith('* '):
+                line = line[2:]
+            
+            # Split into name and description
+            # We look for " - " or ": " as separators
+            parts = []
+            if " - " in line:
+                parts = line.split(" - ", 1)
+            elif ": " in line:
+                parts = line.split(": ", 1)
+            else:
+                # If no separator found, treat whole line as name
+                parts = [line, ""]
+                
+            name = parts[0].strip()
+            description = parts[1].strip() if len(parts) > 1 else ""
+            
+            holidays.append({
+                "name": name,
+                "description": description
+            })
+            
+        return holidays
+
+    except Exception as e:
+        logger.error(f"Error fetching holidays: {e}")
+        return []
 
 
 if __name__ == "__main__":

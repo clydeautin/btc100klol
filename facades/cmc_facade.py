@@ -1,7 +1,9 @@
 import requests  # type: ignore
 import os
-import json
 import logging
+import json
+
+logger = logging.getLogger(__name__)
 from dotenv import load_dotenv  # change this to pull in API key from Const file
 
 load_dotenv()
@@ -25,7 +27,7 @@ def get_btc_price():
         raise CMCApiError("CMC API Key not found in environment variables")
 
     try:
-        response = requests.get(url, params=parameters, headers=headers)
+        response = requests.get(url, params=parameters, headers=headers, timeout=10)
         response.raise_for_status()  # Raise an HTTPError for bad responses
 
         data = response.json()
@@ -42,26 +44,27 @@ def get_btc_price():
         if not isinstance(price, (int, float)):
             raise CMCResponseError("Invalid price format received")
 
+        logger.info(f"Successfully fetched BTC price: ${price}")
         return float(price)
 
     except requests.exceptions.Timeout:
-        logging.error("Timeout error occurred while connecting to CMC API")
+        logger.error("Timeout error occurred while connecting to CMC API")
         raise CMCConnectionError("Failed to connect to CMC API")
 
     except requests.exceptions.ConnectionError:
-        logging.error("Failed to connect to CMC API")
+        logger.error("Failed to connect to CMC API")
         raise CMCConnectionError("Failed to establish connection to CMC API")
 
     except requests.exceptions.RequestException as e:
-        logging.error(f"Request to CMC API failed: {str(e)}")
+        logger.error(f"Request to CMC API failed: {str(e)}")
         raise CMCConnectionError(f"Request failed: {str(e)}")
 
     except (KeyError, IndexError, TypeError) as e:
-        logging.error(f"Error parsing CMC API response: {str(e)}")
+        logger.error(f"Error parsing CMC API response: {str(e)}")
         raise CMCResponseError(f"Failed to parse API response: {str(e)}")
 
     except json.JSONDecodeError as e:
-        logging.error(f"Invalid JSON response from CMC API: {str(e)}")
+        logger.error(f"Invalid JSON response from CMC API: {str(e)}")
         raise CMCResponseError("Invalid JSON response from API")
 
 

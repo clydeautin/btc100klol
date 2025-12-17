@@ -37,7 +37,8 @@ class Prompt(Base):
         default=TaskStatus.PENDING,
         server_default=TaskStatus.PENDING.name,
     )
-
+    
+    # Holiday context for prompt generation (empty object when no holiday applies)
     holiday = Column(
         JSONB,
         nullable=False,

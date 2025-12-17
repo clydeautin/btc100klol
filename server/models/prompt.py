@@ -5,8 +5,10 @@ from sqlalchemy import (
     Date,
     Enum,
     Text,
+    text
 )
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import JSONB
 
 from .base import Base
 from openai_files.utils import PromptType
@@ -26,6 +28,7 @@ class Prompt(Base):
         Text,
         nullable=False,
     )
+
     prompt_date = Column(Date, nullable=False)
     prompt_type = Column(Enum(PromptType), nullable=False)
     status = Column(
@@ -33,4 +36,10 @@ class Prompt(Base):
         nullable=False,
         default=TaskStatus.PENDING,
         server_default=TaskStatus.PENDING.name,
+    )
+
+    holiday = Column(
+        JSONB,
+        nullable=False,
+        server_default=text("'{}'::jsonb")
     )

@@ -8,6 +8,7 @@ from openai_files.utils import PromptType
 from server.models.utils import TaskStatus
 from server.models.image_link import ImageLink
 from openai_files.helpers import get_prompt
+from facades.cmc_facade import get_btc_price
 
 from const import AWS_PRESIGNED_URL_EXPIRATION_SECONDS
 import logging
@@ -42,6 +43,14 @@ class DailyImageGenerator:
 
         daily_versions: list[DailyImageVersion] = []
 
+        # Get current BTC price for winter logic
+        current_price = 100000  # Default to high so winter prompt doesn't trigger on error
+        try:
+            current_price = get_btc_price()
+            logger.info(f"Fetched BTC price for prompt generation: ${current_price:,.2f}")
+        except Exception as e:
+            logger.warning(f"Failed to fetch BTC price for prompt generation: {e}")
+
         # Generate image prompts
         for prompt_type in prompt_types:
             logger.info(f"Processing prompt type: {prompt_type.value}")
@@ -49,7 +58,7 @@ class DailyImageGenerator:
             
             logger.info("Generating image prompt...")
             image_prompt_text = self._generate_image_prompt(
-                image_prompt_record, holiday_list
+                image_prompt_record, holiday_list, price=current_price
             )
 
             # Generate and save image
@@ -116,7 +125,7 @@ class DailyImageGenerator:
             session.add(prompt)
         return prompt
 
-    def _generate_image_prompt(self, prompt: Prompt, holiday_list: str) -> str:
+    def _generate_image_prompt(self, prompt: Prompt, holiday_list: str, price: float = 100000) -> str:
         # TODO(john): Extract try/except -> merge -> write to its own helper
         # to DRY this up. Challenge will be to pass db column names.
         # It's probably easier to just pass the entire function to the helper
@@ -126,7 +135,7 @@ class DailyImageGenerator:
         error: Exception | None = None
 
         try:
-            image_prompt_text = get_prompt(prompt.prompt_type, holiday_list)
+            image_prompt_text = get_prompt(prompt.prompt_type, holiday_list, price=price)
             status = TaskStatus.COMPLETED
         except Exception as e:
             image_prompt_text = str(e)
